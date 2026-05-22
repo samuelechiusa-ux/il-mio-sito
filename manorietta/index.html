@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hands-Free Pong</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+    }
+    #game-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 20px;
+    }
+    #scoreboard {
+      display: flex;
+      justify-content: space-between;
+      width: 1280px;
+      padding: 10px 40px;
+      color: #fff;
+      font-size: 48px;
+      font-weight: bold;
+      letter-spacing: 4px;
+    }
+    #score-left { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+    #score-right { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+    #canvas {
+      border: 2px solid #333;
+      display: block;
+      background: #0a0a0a;
+    }
+    #status-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      font-size: 32px;
+      text-shadow: 0 0 20px #fff;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #status-overlay.visible { opacity: 1; }
+    #sidebar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    #controls {
+      display: flex;
+      gap: 6px;
+    }
+    #controls button {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid #555;
+      color: #999;
+      padding: 4px 10px;
+      font-family: 'Courier New', monospace;
+      cursor: pointer;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+    #controls button:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: #888;
+      color: #bbb;
+    }
+    #controls button.active {
+      background: rgba(255,255,255,0.15);
+      border-color: #ccc;
+      color: #fff;
+    }
+    #debug {
+      color: #555;
+      font-size: 10px;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      line-height: 1.4;
+      max-width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-wrapper">
+    <div>
+      <div id="scoreboard">
+        <span id="score-left">0</span>
+        <span id="score-right">0</span>
+      </div>
+      <div style="position:relative">
+        <canvas id="canvas" width="1280" height="600"></canvas>
+        <div id="status-overlay">READY</div>
+      </div>
+    </div>
+    <div id="sidebar">
+      <div id="controls">
+        <button id="mode-1p" class="active">1P</button>
+        <button id="mode-2p">2P</button>
+      </div>
+      <div id="debug">Waiting for camera...</div>
+    </div>
+  </div>
+
+  <!-- MediaPipe & TensorFlow.js deps -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
+
+  <!-- Game scripts (order matters — each depends on previous) -->
+  <script src="js/config.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/hands.js"></script>
+  <script src="js/stateMachine.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

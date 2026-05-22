@@ -1,0 +1,259 @@
+#app {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.view {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.view.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#home-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#home-center {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.home-title {
+  display: inline-block;
+  width: fit-content;
+  max-width: fit-content;
+  font-family: var(--font-primary);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-title);
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    color var(--transition-default),
+    font-size 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 1s ease,
+    transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.home-title.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.home-title:hover {
+  color: var(--color-hover);
+}
+
+.home-title:active {
+  color: var(--color-active);
+}
+
+.home-title.is-open {
+  font-size: var(--text-title-open);
+  white-space: nowrap;
+}
+
+.home-title.is-open:hover {
+  color: rgba(35, 35, 35, 0.6);
+}
+
+.home-subtitle {
+  display: inline-block;
+  font-family: var(--font-primary);
+  font-weight: var(--weight-light);
+  font-size: var(--text-subtitle);
+  color: var(--color-text);
+  margin-top: 0.5rem;
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    max-height 0.7s ease,
+    margin 0.7s ease;
+  opacity: 0;
+  transform: translateY(20px);
+  max-height: 4rem;
+  overflow: hidden;
+}
+
+.home-subtitle.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.home-subtitle.is-hidden {
+  opacity: 0;
+  transform: translateY(-15px);
+  max-height: 0;
+  margin-top: 0;
+}
+
+#physics-container {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+.svg-shape {
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.svg-shape.is-visible {
+  opacity: 1;
+}
+
+#detail-view {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+#detail-content {
+  max-width: 800px;
+  width: 100%;
+  margin-top: 2rem;
+}
+
+#project-info {
+  padding-bottom: 4rem;
+}
+
+.preview-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.preview-frame:hover {
+  transform: scale(1.02);
+}
+
+.preview-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  pointer-events: none;
+}
+
+.preview-badge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-family: var(--font-primary);
+  font-weight: var(--weight-light);
+  font-size: 1.2rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.preview-frame:hover .preview-badge {
+  opacity: 1;
+}
+
+.project-title {
+  font-family: var(--font-primary);
+  font-weight: var(--weight-semibold);
+  font-size: 2rem;
+  margin: 1.5rem 0 0.5rem;
+  color: var(--color-text);
+}
+
+.project-description {
+  font-family: var(--font-primary);
+  font-weight: var(--weight-light);
+  font-size: 1rem;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.mini-logo {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+  z-index: 300;
+  transition: transform 0.3s ease;
+}
+
+.mini-logo:hover {
+  transform: scale(1.08);
+}
+
+.mini-logo svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.fullscreen-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.fullscreen-overlay iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+@media (max-width: 600px) {
+  #detail-content {
+    padding-top: 4rem;
+  }
+
+  .preview-frame {
+    aspect-ratio: 4 / 3;
+  }
+
+  .project-title {
+    font-size: 1.4rem;
+  }
+
+  .mini-logo {
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 36px;
+    height: 36px;
+  }
+}

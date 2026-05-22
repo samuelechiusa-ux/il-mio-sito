@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>portfolio — samuele chiusa</title>
+  <link rel="stylesheet" href="https://use.typekit.net/jit0hru.css">
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/home.css">
+</head>
+<body>
+  <div id="app">
+    <div id="home-view" class="view active">
+      <div id="home-center">
+        <h1 id="home-title" class="home-title">la mia home</h1>
+        <p id="home-subtitle" class="home-subtitle">di samuele chiusa</p>
+      </div>
+      <div id="physics-container"></div>
+    </div>
+
+    <div id="detail-view" class="view">
+      <div id="detail-content">
+        <div id="preview-container">
+          <div id="preview-frame" class="preview-frame">
+            <iframe id="preview-iframe"></iframe>
+            <div id="preview-badge" class="preview-badge">clicca per esplorare</div>
+          </div>
+        </div>
+        <div id="project-info">
+          <h2 id="project-title" class="project-title"></h2>
+          <p id="project-description" class="project-description"></p>
+        </div>
+      </div>
+      <div id="mini-logo" class="mini-logo"></div>
+    </div>
+
+    <div id="fullscreen-overlay" class="fullscreen-overlay">
+      <iframe id="fullscreen-iframe"></iframe>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

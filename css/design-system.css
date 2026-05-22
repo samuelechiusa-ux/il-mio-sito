@@ -1,0 +1,54 @@
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --color-bg: #f2fbfc;
+  --color-text: #232323;
+  --color-hover: #b70000;
+  --color-active: #232323;
+
+  --font-primary: "snaga-unicase-display", sans-serif;
+  --weight-semibold: 600;
+  --weight-light: 300;
+
+  --text-title: clamp(3rem, 8vw, 7.2rem);
+  --text-title-open: clamp(5rem, 15vw, 14rem);
+  --text-subtitle: clamp(1.2rem, 3vw, 2.8rem);
+  --text-project-name: 1rem;
+
+  --svg-size: clamp(80px, 10vw, 140px);
+  --svg-size-mini: 48px;
+  --safe-radius: 200px;
+
+  --transition-default: 0.3s ease;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-primary);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0); }
+  to   { transform: scale(1); }
+}
