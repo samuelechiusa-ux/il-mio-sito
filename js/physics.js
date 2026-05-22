@@ -6,6 +6,7 @@ const Physics = (() => {
   let safeAreaBody;
   let wallBodies = [];
   let time = 0;
+let mouseConstraint;
 
   function getSvgSize() {
     const vw = window.innerWidth;
@@ -28,10 +29,11 @@ const Physics = (() => {
     createSafeArea();
 
     const mouse = Matter.Mouse.create(shapeContainer);
-    const mouseConstraint = Matter.MouseConstraint.create(engine, {
+    mouseConstraint = Matter.MouseConstraint.create(engine, {
       mouse,
       constraint: {
-        stiffness: 0.2,
+        stiffness: 0.9,
+        damping: 0.05,
         render: { visible: false }
       }
     });
@@ -100,7 +102,7 @@ const Physics = (() => {
     shapes.forEach(shape => {
       const phase = shape.driftPhase;
       const speed = shape.driftSpeed;
-      const forceMag = 0.00008;
+      const forceMag = 0.0002;
       const fx = Math.sin(time * speed + phase) * forceMag;
       const fy = Math.cos(time * speed * 0.7 + phase * 0.5) * forceMag;
       Matter.Body.applyForce(shape.body, shape.body.position, { x: fx, y: fy });
@@ -194,7 +196,7 @@ const Physics = (() => {
         body,
         project,
         driftPhase: Math.random() * Math.PI * 2,
-        driftSpeed: 0.5 + Math.random() * 0.5
+        driftSpeed: 1.0 + Math.random() * 0.8
       });
     });
 

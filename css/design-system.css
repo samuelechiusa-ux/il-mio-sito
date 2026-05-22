@@ -15,7 +15,7 @@
   --weight-light: 300;
 
   --text-title: clamp(3rem, 8vw, 7.2rem);
-  --text-title-open: clamp(5rem, 15vw, 14rem);
+  --text-title-open: clamp(5rem, 13vw, 14rem);
   --text-subtitle: clamp(1.2rem, 3vw, 2.8rem);
   --text-project-name: 1rem;
 

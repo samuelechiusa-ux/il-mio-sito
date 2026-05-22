@@ -7,6 +7,7 @@ const App = (() => {
 
   const homeTitle = document.getElementById('home-title');
   const homeSubtitle = document.getElementById('home-subtitle');
+  const homeCredits = document.getElementById('home-credits');
   const homeView = document.getElementById('home-view');
   const detailView = document.getElementById('detail-view');
   const fullscreenOverlay = document.getElementById('fullscreen-overlay');
@@ -16,6 +17,8 @@ const App = (() => {
   const projectTitle = document.getElementById('project-title');
   const projectDescription = document.getElementById('project-description');
   const miniLogo = document.getElementById('mini-logo');
+  const creditsView = document.getElementById('credits-view');
+  const miniLogoCredits = document.getElementById('mini-logo-credits');
 
   function init() {
     Physics.init();
@@ -26,19 +29,24 @@ const App = (() => {
         setTimeout(() => {
           homeSubtitle.classList.add('is-visible');
         }, 600);
+        setTimeout(() => {
+          homeCredits.classList.add('is-visible');
+        }, 900);
       });
     });
 
     homeTitle.addEventListener('click', toggleHome);
+    homeCredits.addEventListener('click', openCredits);
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && state.currentView === 'fullscreen') {
+      if (e.key === 'Escape' && (state.currentView === 'fullscreen' || state.currentView === 'credits')) {
         backToExpandedHome();
       }
     });
 
     previewFrame.addEventListener('click', openFullscreen);
     miniLogo.addEventListener('click', backToExpandedHome);
+    miniLogoCredits.addEventListener('click', backToExpandedHome);
 
     window.addEventListener('resize', () => {
       Physics.updateDimensions();
@@ -57,6 +65,7 @@ const App = (() => {
     state.isOpen = true;
 
     homeSubtitle.classList.add('is-hidden');
+    homeCredits.classList.add('is-hidden');
 
     setTimeout(() => {
       homeTitle.classList.add('is-open');
@@ -76,7 +85,27 @@ const App = (() => {
     setTimeout(() => {
       homeSubtitle.classList.remove('is-hidden');
       homeSubtitle.classList.add('is-visible');
+      homeCredits.classList.remove('is-hidden');
+      homeCredits.classList.add('is-visible');
     }, 300);
+  }
+
+  function openCredits() {
+    if (state.isOpen) {
+      homeTitle.classList.remove('is-open');
+      Physics.clearShapes();
+      state.isOpen = false;
+    }
+
+    homeView.style.opacity = '0';
+    homeView.classList.remove('active');
+
+    creditsView.classList.add('active');
+    creditsView.style.opacity = '1';
+
+    setupMiniLogo(miniLogoCredits);
+
+    state.currentView = 'credits';
   }
 
   function navigateToProject(project, el) {
@@ -118,7 +147,7 @@ const App = (() => {
   }
 
   function showDetailView(project) {
-    setupMiniLogo(project);
+    setupMiniLogo(miniLogo);
 
     previewIframe.src = project.path;
     projectTitle.textContent = project.title;
@@ -138,13 +167,13 @@ const App = (() => {
     miniLogo._scrollHandler = onScroll;
   }
 
-  function setupMiniLogo(project) {
-    miniLogo.innerHTML = '';
-    miniLogo.style.display = 'block';
-    const svgContent = SVGS[project.id];
+  function setupMiniLogo(el) {
+    el.innerHTML = '';
+    el.style.display = 'block';
+    const svgContent = SVGS['torna-indietro'];
     if (svgContent) {
-      miniLogo.innerHTML = svgContent;
-      const svgEl = miniLogo.querySelector('svg');
+      el.innerHTML = svgContent;
+      const svgEl = el.querySelector('svg');
       if (svgEl) {
         svgEl.style.width = '100%';
         svgEl.style.height = '100%';
@@ -166,19 +195,26 @@ const App = (() => {
       detailView.style.opacity = '0';
       detailView.classList.remove('active');
       previewIframe.src = '';
-
       if (miniLogo._scrollHandler) {
         window.removeEventListener('scroll', miniLogo._scrollHandler);
       }
     }
 
+    if (state.currentView === 'credits') {
+      creditsView.style.opacity = '0';
+      creditsView.classList.remove('active');
+    }
+
     miniLogo.style.display = 'none';
     miniLogo.innerHTML = '';
+    miniLogoCredits.style.display = 'none';
+    miniLogoCredits.innerHTML = '';
 
     homeView.style.opacity = '1';
     homeView.classList.add('active');
 
     state.currentView = 'home';
+    state.isOpen = false;
 
     openProjects();
   }

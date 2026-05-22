@@ -104,6 +104,35 @@
   margin-top: 0;
 }
 
+.home-credits {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  font-family: var(--font-primary);
+  font-weight: var(--weight-light);
+  font-size: clamp(0.85rem, 1.8vw, 1.4rem);
+  color: var(--color-text);
+  text-align: center;
+  white-space: nowrap;
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+}
+
+.home-credits.is-visible {
+  opacity: 1;
+}
+
+.home-credits.is-hidden {
+  opacity: 0;
+}
+
+.home-credits:hover {
+  color: var(--color-hover);
+  cursor: pointer;
+}
+
 #physics-container {
   position: absolute;
   inset: 0;
@@ -235,6 +264,33 @@
   width: 100%;
   height: 100%;
   border: none;
+}
+
+#credits-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  z-index: 50;
+}
+
+#credits-content {
+  max-width: 600px;
+  font-family: var(--font-primary);
+  font-weight: var(--weight-light);
+  font-size: clamp(0.9rem, 2vw, 1.4rem);
+  color: var(--color-text);
+  line-height: 1.8;
+  text-align: center;
+}
+
+#credits-content p {
+  margin-bottom: 1.5rem;
+}
+
+#credits-content strong {
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
 }
 
 @media (max-width: 600px) {
