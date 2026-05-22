@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geometric Texture Grid</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+
+  .container {
+    background: #4b4c3e;
+    padding: 0.75rem 1rem;
+    border-radius: 0;
+    box-shadow: none;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #grid {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .controls {
+    margin-bottom: 0.5rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .controls {
+    background: #7a7b6a;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+  }
+
+  .controls label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #e8e8e0;
+  }
+
+  .controls input[type="range"] {
+    width: 120px;
+  }
+
+  .controls input[type="color"] {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px;
+    cursor: pointer;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="controls">
+    <label>
+      Stroke
+      <input type="range" id="stroke" min="0.5" max="8" step="0.25" value="2">
+    </label>
+    <label>
+      Inner size
+      <input type="range" id="innerSize" min="40" max="70" step="1" value="52">
+    </label>
+    <label>
+      Color
+      <input type="color" id="color" value="#222222">
+    </label>
+    <label>
+      Spacing
+      <input type="range" id="spacing" min="0" max="20" step="1" value="4">
+    </label>
+    <label>
+      Density
+      <input type="range" id="density" min="40" max="160" step="5" value="80">
+    </label>
+  </div>
+
+  <div id="grid"></div>
+
+</div>
+
+<script>
+  const strokeInput = document.getElementById('stroke');
+  const innerInput = document.getElementById('innerSize');
+  const colorInput = document.getElementById('color');
+  const spacingInput = document.getElementById('spacing');
+  const densityInput = document.getElementById('density');
+  const grid = document.getElementById('grid');
+
+  function render() {
+    const stroke = parseFloat(strokeInput.value);
+    const innerPct = parseFloat(innerInput.value) / 100;
+    const color = colorInput.value;
+    const sp = parseFloat(spacingInput.value);
+    const size = parseFloat(densityInput.value);
+
+    const availW = grid.clientWidth || 800;
+    const availH = grid.clientHeight || 600;
+
+    const ins = Math.round(size * innerPct);
+    const step = size + sp;
+    const cols = Math.ceil(availW / step) + 1;
+    const rows = Math.ceil(availH / step) + 1;
+
+    let svg = `<svg viewBox="0 0 ${availW} ${availH}" xmlns="http://www.w3.org/2000/svg">`;
+    svg += `<defs><style>
+      .g-fill-window { fill: #c9c300; }
+      .g-fill-top { fill: #444; }
+      .g-fill-right { fill: #777676; }
+      .g-ln { stroke: ${color}; stroke-width: ${stroke}; stroke-linecap: square; fill: none; }
+    </style></defs>`;
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const x = col * step;
+        const y = row * step;
+
+        const ix = x;
+        const iy = y + size - ins;
+
+        svg += `<rect class="g-fill-window" x="${ix}" y="${iy}" width="${ins}" height="${ins}"/>`;
+        svg += `<polygon class="g-fill-top" points="${ix},${iy} ${x},${y} ${x+size},${y} ${ix+ins},${iy}"/>`;
+        svg += `<polygon class="g-fill-right" points="${ix+ins},${iy} ${x+size},${y} ${x+size},${y+size} ${ix+ins},${iy+ins}"/>`;
+        svg += `<rect class="g-ln" x="${x}" y="${y}" width="${size}" height="${size}"/>`;
+        svg += `<rect class="g-ln" x="${ix}" y="${iy}" width="${ins}" height="${ins}"/>`;
+        svg += `<line class="g-ln" x1="${x+size}" y1="${y}" x2="${ix+ins}" y2="${iy}"/>`;
+      }
+    }
+
+    svg += '</svg>';
+    grid.innerHTML = svg;
+  }
+
+  function rerender() { requestAnimationFrame(render); }
+
+  [strokeInput, innerInput, colorInput, spacingInput, densityInput].forEach(el =>
+    el.addEventListener('input', render)
+  );
+
+  window.addEventListener('resize', rerender);
+  render();
+</script>
+
+</body>
+</html>

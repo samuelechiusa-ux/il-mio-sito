@@ -5,6 +5,7 @@ const Physics = (() => {
   let shapeContainer;
   let safeAreaBody;
   let wallBodies = [];
+  let time = 0;
 
   function getSvgSize() {
     const vw = window.innerWidth;
@@ -94,7 +95,19 @@ const Physics = (() => {
   }
 
   function updateLoop() {
+    time += 1 / 60;
+
+    shapes.forEach(shape => {
+      const phase = shape.driftPhase;
+      const speed = shape.driftSpeed;
+      const forceMag = 0.00008;
+      const fx = Math.sin(time * speed + phase) * forceMag;
+      const fy = Math.cos(time * speed * 0.7 + phase * 0.5) * forceMag;
+      Matter.Body.applyForce(shape.body, shape.body.position, { x: fx, y: fy });
+    });
+
     Matter.Engine.update(engine, 1000 / 60);
+
     shapes.forEach(shape => {
       const el = shape.element;
       if (el) {
@@ -139,7 +152,7 @@ const Physics = (() => {
       const body = Matter.Bodies.circle(startX, startY, 40, {
         restitution: 0.8,
         friction: 0.05,
-        frictionAir: 0.01,
+        frictionAir: 0.02,
         density: 0.002
       });
       body.label = project.id;
@@ -176,7 +189,13 @@ const Physics = (() => {
         el.classList.add('is-visible');
       });
 
-      shapes.push({ element: el, body, project });
+      shapes.push({
+        element: el,
+        body,
+        project,
+        driftPhase: Math.random() * Math.PI * 2,
+        driftSpeed: 0.5 + Math.random() * 0.5
+      });
     });
 
     return shapes;

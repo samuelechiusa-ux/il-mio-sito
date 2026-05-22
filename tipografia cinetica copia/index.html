@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Essenza 3D Generativa</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; }
+    canvas { display: block; touch-action: none; }
+    #slider-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 14px 24px 18px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  z-index: 10;
+  flex-wrap: wrap;
+}
+
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 90px;
+}
+
+.slider-group label {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #555;
+}
+
+.slider-group input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 90px;
+  height: 4px;
+  border-radius: 2px;
+  background: #ddd;
+  outline: none;
+  cursor: pointer;
+}
+
+.slider-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e34a00;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  transition: transform 0.15s;
+}
+
+.slider-group input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.slider-group input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e34a00;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.slider-value {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: #888;
+  min-width: 36px;
+  text-align: center;
+}
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <script id="vertexShader" type="x-shader/x-vertex">
+    uniform float uTime;
+    uniform float uPhase;
+    uniform vec2 uMouse;
+    uniform vec3 uMouse3D;
+    uniform float uRadius;
+    uniform float uDisplacementAmp;
+
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    varying float vNoise;
+    varying float vDisplacement;
+
+    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+    vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+    float snoise(vec3 v) {
+      const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+      const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+      vec3 i  = floor(v + dot(v, C.yyy));
+      vec3 x0 = v - i + dot(i, C.xxx);
+      vec3 g = step(x0.yzx, x0.xyz);
+      vec3 l = 1.0 - g;
+      vec3 i1 = min(g.xyz, l.zxy);
+      vec3 i2 = max(g.xyz, l.zxy);
+      vec3 x1 = x0 - i1 + C.xxx;
+      vec3 x2 = x0 - i2 + C.yyy;
+      vec3 x3 = x0 - D.yyy;
+      i = mod289(i);
+      vec4 p = permute(permute(permute(
+                i.z + vec4(0.0, i1.z, i2.z, 1.0))
+              + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+              + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+      float n_ = 0.142857142857;
+      vec3 ns = n_ * D.wyz - D.xzx;
+      vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+      vec4 x_ = floor(j * ns.z);
+      vec4 y_ = floor(j - 7.0 * x_);
+      vec4 x = x_ * ns.x + ns.yyyy;
+      vec4 y = y_ * ns.x + ns.yyyy;
+      vec4 h = 1.0 - abs(x) - abs(y);
+      vec4 b0 = vec4(x.xy, y.xy);
+      vec4 b1 = vec4(x.zw, y.zw);
+      vec4 s0 = floor(b0)*2.0 + 1.0;
+      vec4 s1 = floor(b1)*2.0 + 1.0;
+      vec4 sh = -step(h, vec4(0.0));
+      vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+      vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+      vec3 p0 = vec3(a0.xy, h.x);
+      vec3 p1 = vec3(a0.zw, h.y);
+      vec3 p2 = vec3(a1.xy, h.z);
+      vec3 p3 = vec3(a1.zw, h.w);
+      vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+      p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+      vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+      m = m * m;
+      return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+    }
+
+    float fbm(vec3 p, int octaves) {
+      float value = 0.0;
+      float amplitude = 0.5;
+      float frequency = 1.0;
+      for (int i = 0; i < 4; i++) {
+        value += amplitude * snoise(p * frequency);
+        frequency *= 2.0;
+        amplitude *= 0.5;
+      }
+      return value;
+    }
+
+    void main() {
+      vec3 pos = position;
+
+      float mouseDist = distance(pos, uMouse3D);
+      float mouseInfluence = 1.0 - smoothstep(0.0, 4.0, mouseDist);
+      float wave = sin(mouseDist * 8.0 - uTime * 3.0) * 0.5 + 0.5;
+
+      vec3 noiseInput = pos * 0.8 + vec3(uTime * 0.15 + uMouse.x * 0.3 * mouseInfluence, uTime * 0.1 + uMouse.y * 0.2 * mouseInfluence, uTime * 0.12);
+
+      float n1 = fbm(noiseInput, 4);
+      float n2 = snoise(pos * 0.4 + uTime * 0.08);
+      float n3 = snoise(pos * 1.2 + uTime * 0.2);
+
+      float combinedNoise = n1 * 0.6 + n2 * 0.25 + n3 * 0.15;
+      vNoise = combinedNoise;
+
+      float push = mouseInfluence * wave * 0.2;
+      float displacement = combinedNoise * uDisplacementAmp + push;
+      vDisplacement = displacement;
+
+      vec3 displacedPos = pos + normal * displacement;
+
+      float twist = uMouse.x * 0.2 * combinedNoise;
+      float cosT = cos(twist);
+      float sinT = sin(twist);
+      vec3 twistedPos = vec3(
+        displacedPos.x * cosT - displacedPos.z * sinT,
+        displacedPos.y,
+        displacedPos.x * sinT + displacedPos.z * cosT
+      );
+
+      vNormal = normalize(normalMatrix * normal);
+      vPosition = (modelViewMatrix * vec4(twistedPos, 1.0)).xyz;
+
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(twistedPos, 1.0);
+    }
+  </script>
+
+  <script id="fragmentShader" type="x-shader/x-fragment">
+    uniform float uTime;
+    uniform float uPhase;
+    uniform vec3 uColor1;
+    uniform vec3 uColor2;
+    uniform float uOpacity;
+
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    varying float vNoise;
+    varying float vDisplacement;
+
+    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+    vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+    float snoise(vec3 v) {
+      const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+      const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+      vec3 i  = floor(v + dot(v, C.yyy));
+      vec3 x0 = v - i + dot(i, C.xxx);
+      vec3 g = step(x0.yzx, x0.xyz);
+      vec3 l = 1.0 - g;
+      vec3 i1 = min(g.xyz, l.zxy);
+      vec3 i2 = max(g.xyz, l.zxy);
+      vec3 x1 = x0 - i1 + C.xxx;
+      vec3 x2 = x0 - i2 + C.yyy;
+      vec3 x3 = x0 - D.yyy;
+      i = mod289(i);
+      vec4 p = permute(permute(permute(
+                i.z + vec4(0.0, i1.z, i2.z, 1.0))
+              + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+              + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+      float n_ = 0.142857142857;
+      vec3 ns = n_ * D.wyz - D.xzx;
+      vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+      vec4 x_ = floor(j * ns.z);
+      vec4 y_ = floor(j - 7.0 * x_);
+      vec4 x = x_ * ns.x + ns.yyyy;
+      vec4 y = y_ * ns.x + ns.yyyy;
+      vec4 h = 1.0 - abs(x) - abs(y);
+      vec4 b0 = vec4(x.xy, y.xy);
+      vec4 b1 = vec4(x.zw, y.zw);
+      vec4 s0 = floor(b0)*2.0 + 1.0;
+      vec4 s1 = floor(b1)*2.0 + 1.0;
+      vec4 sh = -step(h, vec4(0.0));
+      vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+      vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+      vec3 p0 = vec3(a0.xy, h.x);
+      vec3 p1 = vec3(a0.zw, h.y);
+      vec3 p2 = vec3(a1.xy, h.z);
+      vec3 p3 = vec3(a1.zw, h.w);
+      vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+      p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+      vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+      m = m * m;
+      return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+    }
+
+    vec3 calcNormal(vec3 pos) {
+      return normalize(cross(dFdx(pos), dFdy(pos)));
+    }
+
+    vec3 hsl2rgb(vec3 hsl) {
+      vec3 rgb = clamp(abs(mod(hsl.x*6.0+vec3(0.0,4.0,2.0), 6.0)-3.0)-1.0, 0.0, 1.0);
+      return hsl.z + hsl.y * (rgb-0.5)*(1.0-abs(2.0*hsl.z-1.0));
+    }
+
+    vec3 rgb2hsl(vec3 rgb) {
+      float maxC = max(max(rgb.r, rgb.g), rgb.b);
+      float minC = min(min(rgb.r, rgb.g), rgb.b);
+      float l = (maxC + minC) * 0.5;
+      if (maxC == minC) return vec3(0.0, 0.0, l);
+      float d = maxC - minC;
+      float s = l > 0.5 ? d / (2.0 - maxC - minC) : d / (maxC + minC);
+      float h = 0.0;
+      if (maxC == rgb.r) h = (rgb.g - rgb.b) / d + (rgb.g < rgb.b ? 6.0 : 0.0);
+      else if (maxC == rgb.g) h = (rgb.b - rgb.r) / d + 2.0;
+      else h = (rgb.r - rgb.g) / d + 4.0;
+      h /= 6.0;
+      return vec3(h, s, l);
+    }
+
+    void main() {
+      float colorT = smoothstep(0.0, 0.375, uPhase);
+      float desatT = 1.0 - smoothstep(0.625, 1.0, uPhase);
+      float mixFactor = min(colorT, 1.0) * min(desatT, 1.0);
+
+      vec3 baseColor = mix(uColor1, uColor2, mixFactor);
+
+      float colorVar = vNoise * 0.15;
+      vec3 hslBase = rgb2hsl(baseColor);
+      hslBase.r += colorVar * 0.05;
+      hslBase.g = clamp(hslBase.g + colorVar * 0.2, 0.1, 1.0);
+      vec3 finalColor = hsl2rgb(hslBase);
+
+      vec3 surfaceNormal = calcNormal(vPosition);
+      vec3 perturbedNormal = normalize(surfaceNormal + vNoise * 0.3 * normalize(vec3(vNoise, vNoise * 0.5, vNoise * 0.3)));
+      vec3 viewDir = normalize(cameraPosition - vPosition);
+      float fresnel = 1.0 - max(dot(perturbedNormal, viewDir), 0.0);
+      fresnel = pow(fresnel, 2.0);
+
+      finalColor += fresnel * 0.3;
+
+      float porosityNoise = snoise(vPosition * 2.5 + uTime * 0.05);
+      float porosityPattern = sin(vPosition.x * 8.0 + vPosition.y * 7.0 + vPosition.z * 5.0 + uTime * 0.1) * 0.5 + 0.5;
+      float porosity = clamp(porosityNoise * 0.7 + porosityPattern * 0.3, 0.0, 1.0);
+
+      float baseOpacity = uOpacity * (0.5 + 0.5 * mixFactor);
+      float finalOpacity = baseOpacity * (0.6 + 0.4 * porosity);
+
+      float innerGlow = 1.0 - abs(vNoise) * 0.3;
+      finalColor += innerGlow * 0.1;
+
+      gl_FragColor = vec4(finalColor, finalOpacity);
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+    import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+
+    function smoothstep(edge0, edge1, x) {
+      const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+      return t * t * (3 - 2 * t);
+    }
+
+    const clock = new THREE.Clock();
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 12);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    document.body.appendChild(renderer.domElement);
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+    let clickImpulse = 0;
+
+    let isDragging = false;
+    let prevPointer = { x: 0, y: 0 };
+    let theta = 0;
+    let phi = Math.PI / 2;
+    const orbitRadius = 12;
+
+    renderer.domElement.addEventListener('pointerdown', (event) => {
+      isDragging = true;
+      prevPointer.x = event.clientX;
+      prevPointer.y = event.clientY;
+      clickImpulse = 1.0;
+      renderer.domElement.setPointerCapture(event.pointerId);
+    });
+
+    window.addEventListener('pointermove', (event) => {
+      if (isDragging) {
+        const dx = event.clientX - prevPointer.x;
+        const dy = event.clientY - prevPointer.y;
+        theta -= dx * 0.008;
+        phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi - dy * 0.008));
+        prevPointer.x = event.clientX;
+        prevPointer.y = event.clientY;
+      }
+      mouse.targetX = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.targetY = -(event.clientY / window.innerHeight) * 2 + 1;
+    });
+
+    window.addEventListener('pointerup', () => {
+      isDragging = false;
+    });
+
+    const CYCLE_DURATION = 40;
+    const PEAK_DURATION = 15;
+    const ASCENT_DURATION = 10;
+    const DESCENT_DURATION = 10;
+    const REST_DURATION = 5;
+
+    let globalTime = 0;
+
+    const uniforms = {
+      uTime: { value: 0 },
+      uPhase: { value: 0 },
+      uMouse: { value: new THREE.Vector2(0, 0) },
+      uMouse3D: { value: new THREE.Vector3(0, 0, 0) },
+      uRadius: { value: 2.0 },
+      uColor1: { value: new THREE.Color(0.95, 0.98, 1.0) },
+      uColor2: { value: new THREE.Color(1.0, 0.3, 0.0) },
+      uOpacity: { value: 0.3 },
+      uDisplacementAmp: { value: 0.0 },
+      uScaleMul: { value: 1.0 },
+    };
+
+    let sliderColorVal = null;
+    let sliderDeformVal = null;
+    let sliderOpacityVal = null;
+
+    const sliderScale = document.getElementById('slider-scale');
+    const sliderColor = document.getElementById('slider-color');
+    const sliderSpeed = document.getElementById('slider-speed');
+    const sliderDeform = document.getElementById('slider-deform');
+    const sliderOpacity = document.getElementById('slider-opacity');
+
+    const valScale = document.getElementById('val-scale');
+    const valColor = document.getElementById('val-color');
+    const valSpeed = document.getElementById('val-speed');
+    const valDeform = document.getElementById('val-deform');
+    const valOpacity = document.getElementById('val-opacity');
+
+    sliderScale.addEventListener('input', () => {
+      uniforms.uScaleMul.value = parseFloat(sliderScale.value);
+      valScale.textContent = parseFloat(sliderScale.value).toFixed(2);
+    });
+
+    sliderColor.addEventListener('input', () => {
+      sliderColorVal = parseFloat(sliderColor.value);
+      valColor.textContent = sliderColor.value;
+    });
+
+    sliderSpeed.addEventListener('input', () => {
+      valSpeed.textContent = sliderSpeed.value;
+    });
+
+    sliderDeform.addEventListener('input', () => {
+      sliderDeformVal = parseFloat(sliderDeform.value);
+      valDeform.textContent = sliderDeform.value;
+    });
+
+    sliderOpacity.addEventListener('input', () => {
+      sliderOpacityVal = parseFloat(sliderOpacity.value);
+      valOpacity.textContent = sliderOpacity.value;
+    });
+
+    const bgWhite = new THREE.Color(1, 1, 1);
+    const bgYellow = new THREE.Color(1, 0.95, 0.75);
+    const color1 = new THREE.Color(0.95, 0.98, 1.0);
+    const color2 = new THREE.Color(1.0, 0.3, 0.0);
+    const particleColor = new THREE.Color(0.95, 0.98, 1.0);
+
+    const fontLoader = new FontLoader();
+    let saturoFont = null;
+    fontLoader.load(
+      'https://cdn.jsdelivr.net/npm/@compai/font-jost/data/typefaces/normal-700.json',
+      (font) => {
+        saturoFont = font;
+        createTextMesh();
+      },
+      undefined,
+      (err) => console.error('Font load error:', err)
+    );
+
+    let meshes = [];
+
+    function createTextMesh() {
+      const textOptions = { font: saturoFont, size: 1, height: 0.5, curveSegments: 6, bevelThickness: 0.05, bevelSize: 0.02, bevelEnabled: true };
+      const shaderMat = new THREE.ShaderMaterial({
+        uniforms,
+        vertexShader: document.getElementById('vertexShader').textContent,
+        fragmentShader: document.getElementById('fragmentShader').textContent,
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.NormalBlending,
+      });
+
+      const beforeGeo = new TextGeometry('(SATUR', textOptions);
+      beforeGeo.computeBoundingBox();
+      const beforeW = beforeGeo.boundingBox.max.x - beforeGeo.boundingBox.min.x;
+      beforeGeo.center();
+      const beforeMesh = new THREE.Mesh(beforeGeo, shaderMat);
+      scene.add(beforeMesh);
+      meshes.push(beforeMesh);
+
+      const oLetterGeo = new TextGeometry('O', textOptions);
+      oLetterGeo.computeBoundingBox();
+      const oW = oLetterGeo.boundingBox.max.x - oLetterGeo.boundingBox.min.x;
+      const oYMin = oLetterGeo.boundingBox.min.y;
+      const oYMax = oLetterGeo.boundingBox.max.y;
+
+      const parenGeo = new TextGeometry(')', textOptions);
+      parenGeo.computeBoundingBox();
+      const parenW = parenGeo.boundingBox.max.x - parenGeo.boundingBox.min.x;
+      parenGeo.center();
+      const parenMesh = new THREE.Mesh(parenGeo, shaderMat);
+      scene.add(parenMesh);
+      meshes.push(parenMesh);
+
+      const outerR = oW * 0.48;
+      const innerR = oW * 0.25;
+      const oShape = new THREE.Shape();
+      oShape.absarc(0, 0, outerR, 0, Math.PI * 2, false);
+      const holePath = new THREE.Path();
+      holePath.absarc(0, 0, innerR, 0, Math.PI * 2, true);
+      oShape.holes.push(holePath);
+
+      const oGeo = new THREE.ExtrudeGeometry(oShape, { depth: 0.5, bevelThickness: 0.05, bevelSize: 0.02, bevelEnabled: true, curveSegments: 6, bevelSegments: 3 });
+      oGeo.translate(0, (oYMin + oYMax) / 2, 0);
+      oGeo.computeBoundingBox();
+      oGeo.center();
+      const oMesh = new THREE.Mesh(oGeo, shaderMat);
+      scene.add(oMesh);
+      meshes.push(oMesh);
+
+      beforeMesh.position.x = -(oW + parenW) / 2;
+      oMesh.position.x = (beforeW - parenW) / 2;
+      parenMesh.position.x = (beforeW + oW) / 2;
+    }
+
+    const PARTICLE_COUNT = 3000;
+    const particleDirs = new Float32Array(PARTICLE_COUNT * 3);
+    const particlePhases = new Float32Array(PARTICLE_COUNT);
+    const particleOffsets = new Float32Array(PARTICLE_COUNT);
+    const particlePositions = new Float32Array(PARTICLE_COUNT * 3);
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = Math.cbrt(Math.random());
+      const x = Math.sin(phi) * Math.cos(theta);
+      const y = Math.sin(phi) * Math.sin(theta);
+      const z = Math.cos(phi);
+      particleDirs[i * 3] = x;
+      particleDirs[i * 3 + 1] = y;
+      particleDirs[i * 3 + 2] = z;
+      particlePositions[i * 3] = x * r * 1.8;
+      particlePositions[i * 3 + 1] = y * r * 1.8;
+      particlePositions[i * 3 + 2] = z * r * 1.8;
+      particlePhases[i] = Math.random() * Math.PI * 2;
+      particleOffsets[i] = 0.3 + Math.random() * 0.7;
+    }
+
+    const particleGeometry = new THREE.BufferGeometry();
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+
+    const particleMaterial = new THREE.PointsMaterial({
+      size: 0.08,
+      color: 0x88bbff,
+      transparent: true,
+      opacity: 0.3,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      sizeAttenuation: true,
+    });
+
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    scene.add(particles);
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const delta = Math.min(clock.getDelta(), 0.1);
+      const speedMul = parseFloat(sliderSpeed.value);
+      globalTime += delta * speedMul;
+      uniforms.uTime.value = globalTime;
+
+      const phaseInCycle = (globalTime % CYCLE_DURATION) / CYCLE_DURATION;
+      uniforms.uPhase.value = phaseInCycle;
+
+      const ascentEnd = REST_DURATION / CYCLE_DURATION;
+      const peakEnd = (REST_DURATION + ASCENT_DURATION) / CYCLE_DURATION;
+      const descentEnd = (REST_DURATION + ASCENT_DURATION + PEAK_DURATION) / CYCLE_DURATION;
+
+      let scaleTarget;
+      if (phaseInCycle < ascentEnd) {
+        scaleTarget = 1.0;
+      } else if (phaseInCycle < peakEnd) {
+        const t = (phaseInCycle - ascentEnd) / (peakEnd - ascentEnd);
+        scaleTarget = 1.0 + 3.0 * t;
+      } else if (phaseInCycle < descentEnd) {
+        scaleTarget = 4.0;
+      } else {
+        const t = (phaseInCycle - descentEnd) / (1.0 - descentEnd);
+        scaleTarget = 4.0 - 3.0 * t;
+      }
+
+      for (const m of meshes) {
+        const baseScale = scaleTarget * uniforms.uScaleMul.value;
+        m.scale.set(baseScale, baseScale, baseScale);
+      }
+
+      let dispAmp;
+      if (phaseInCycle < ascentEnd) {
+        dispAmp = 0.0;
+      } else if (phaseInCycle < peakEnd) {
+        const t = (phaseInCycle - ascentEnd) / (peakEnd - ascentEnd);
+        dispAmp = t * 1.5;
+      } else if (phaseInCycle < descentEnd) {
+        dispAmp = 1.5;
+      } else {
+        const t = (phaseInCycle - descentEnd) / (1.0 - descentEnd);
+        dispAmp = 1.5 * (1.0 - t);
+      }
+      const effectiveDispAmp = sliderDeformVal !== null ? sliderDeformVal : dispAmp;
+      uniforms.uDisplacementAmp.value = effectiveDispAmp;
+
+      let colorMix;
+      if (phaseInCycle < ascentEnd) {
+        colorMix = 0.0;
+      } else if (phaseInCycle < peakEnd) {
+        colorMix = (phaseInCycle - ascentEnd) / (peakEnd - ascentEnd);
+      } else if (phaseInCycle < descentEnd) {
+        colorMix = 1.0;
+      } else {
+        colorMix = 1.0 - (phaseInCycle - descentEnd) / (1.0 - descentEnd);
+      }
+      const effectiveColorMix = sliderColorVal !== null ? sliderColorVal : colorMix;
+      if (sliderColorVal !== null) {
+        const mixed = new THREE.Color(0.95, 0.98, 1.0).lerp(new THREE.Color(1.0, 0.3, 0.0), effectiveColorMix);
+        uniforms.uColor1.value.copy(mixed);
+        uniforms.uColor2.value.copy(mixed);
+      } else {
+        uniforms.uColor1.value.copy(color1);
+        uniforms.uColor2.value.copy(color2);
+      }
+
+      let baseOpacity = 0.3 + 0.55 * colorMix;
+      const effectiveOpacity = sliderOpacityVal !== null ? sliderOpacityVal : baseOpacity;
+      uniforms.uOpacity.value = effectiveOpacity;
+
+      if (sliderColorVal === null) {
+        sliderColor.value = colorMix;
+        valColor.textContent = 'auto';
+      }
+      if (sliderOpacityVal === null) {
+        sliderOpacity.value = effectiveOpacity;
+        valOpacity.textContent = 'auto';
+      }
+      if (sliderDeformVal === null) {
+        sliderDeform.value = dispAmp / 1.5;
+        valDeform.textContent = 'auto';
+      }
+
+      const bgProgress = (globalTime % CYCLE_DURATION) / CYCLE_DURATION;
+      if (bgProgress < 0.375) {
+        const t = bgProgress / 0.375;
+        scene.background.copy(bgWhite).lerp(bgYellow, t);
+      } else if (bgProgress < 0.75) {
+        scene.background.copy(bgYellow);
+      } else {
+        const t = (bgProgress - 0.75) / 0.25;
+        scene.background.copy(bgYellow).lerp(bgWhite, t);
+      }
+
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+      uniforms.uMouse.value.set(mouse.x, mouse.y + clickImpulse * 0.5);
+      uniforms.uMouse3D.value.set(mouse.x * 4.5, mouse.y * 4.5, 0);
+
+      clickImpulse *= 0.95;
+      if (clickImpulse < 0.01) clickImpulse = 0;
+
+      const positions = particles.geometry.attributes.position.array;
+      const phase = uniforms.uPhase.value;
+
+      const particleScale = 2.0 + 6.0 * Math.min(smoothstep(0.0, 0.375, phase), 1.0) * Math.min(1.0 - smoothstep(0.625, 1.0, phase), 1.0);
+      const particleRadius = 1.8 * (particleScale / 2.0);
+
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const idx = i * 3;
+        const dx = particleDirs[idx];
+        const dy = particleDirs[idx + 1];
+        const dz = particleDirs[idx + 2];
+        const drift = Math.sin(globalTime * 0.5 + particlePhases[i]) * 0.05;
+        const spread = particleRadius * particleOffsets[i];
+        positions[idx] = dx * spread + drift;
+        positions[idx + 1] = dy * spread + drift * 0.7;
+        positions[idx + 2] = dz * spread + drift * 0.5;
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+
+      const colorT = Math.min(smoothstep(0.0, 0.375, phase), 1.0) * Math.min(1.0 - smoothstep(0.625, 1.0, phase), 1.0);
+      particleColor.copy(color1).lerp(color2, colorT * 0.7);
+      particleMaterial.color.copy(particleColor);
+
+      particleMaterial.opacity = 0.1 + 0.4 * colorT;
+
+      camera.position.x = orbitRadius * Math.sin(phi) * Math.sin(theta);
+      camera.position.y = orbitRadius * Math.cos(phi);
+      camera.position.z = orbitRadius * Math.sin(phi) * Math.cos(theta);
+      camera.lookAt(0, 0, 0);
+
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+<div id="slider-bar">
+  <div class="slider-group">
+    <label>Scala</label>
+    <input type="range" id="slider-scale" min="0.5" max="2.0" step="0.01" value="1.0">
+    <span class="slider-value" id="val-scale">1.00</span>
+  </div>
+  <div class="slider-group">
+    <label>Colore</label>
+    <input type="range" id="slider-color" min="0" max="1" step="0.01" value="0">
+    <span class="slider-value" id="val-color">auto</span>
+  </div>
+  <div class="slider-group">
+    <label>Velocità</label>
+    <input type="range" id="slider-speed" min="0.1" max="3.0" step="0.1" value="1.0">
+    <span class="slider-value" id="val-speed">1.0</span>
+  </div>
+  <div class="slider-group">
+    <label>Deformazione</label>
+    <input type="range" id="slider-deform" min="0" max="2.0" step="0.01" value="0">
+    <span class="slider-value" id="val-deform">auto</span>
+  </div>
+  <div class="slider-group">
+    <label>Opacità</label>
+    <input type="range" id="slider-opacity" min="0" max="1" step="0.01" value="0">
+    <span class="slider-value" id="val-opacity">auto</span>
+  </div>
+</div>
+</body>
+</html>
